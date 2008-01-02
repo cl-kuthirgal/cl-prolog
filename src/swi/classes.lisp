@@ -1,5 +1,5 @@
 
-(in-package #:cl-swi)
+(in-package :cl-swi)
 
 (defclass swi-prolog (prolog)
   ((argv-ptr :initarg :argv-ptr

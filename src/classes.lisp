@@ -1,5 +1,5 @@
 
-(in-package #:cl-prolog-sys)
+(in-package :cl-prolog-sys)
 
 (defclass reference-mixin ()
   ((ref :initarg :ref

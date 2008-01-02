@@ -1,5 +1,5 @@
 
-(in-package #:cl-prolog-sys)
+(in-package :cl-prolog-sys)
 
 (defgeneric read-term (term)
   (:documentation "Reads Lisp data from TERM."))
@@ -22,7 +22,7 @@ ARGS. Returns a prolog instance if successful, or NIL otherwise."))
 (defgeneric destroy-prolog (prolog)
   (:documentation "Removes the PROLOG backend."))
 
-(defgeneric is-enabled-p (prolog)
+(defgeneric enabled-p (prolog)
   (:documentation "Returns T if the PROLOG backend is enabled, or NIL
 otherwise."))
 

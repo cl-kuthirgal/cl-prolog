@@ -1,5 +1,5 @@
 
-(in-package #:cl-prolog-sys)
+(in-package :cl-prolog-sys)
 
 (define-condition prolog-error (error)
   ((text :initarg :text :initform nil

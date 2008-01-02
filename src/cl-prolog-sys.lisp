@@ -1,14 +1,17 @@
 
-(in-package #:cl-prolog-sys)
+(in-package :cl-prolog-sys)
 
-(defvar *valid-uc-atom-scanner* (cl-ppcre:create-scanner "^[A-Z0-9_]*$")
+(defvar *valid-uc-atom-scanner*
+  (cl-ppcre:create-scanner "^[A-Z0-9_]*$")
   "Matches uppercase names of Lisp symbols which may be mapped to
 Prolog atoms.")
-(defvar *valid-mc-atom-scanner* (cl-ppcre:create-scanner "^[a-z][a-zA-Z0-9_]*$")
+(defvar *valid-mc-atom-scanner*
+  (cl-ppcre:create-scanner "^[a-z][a-zA-Z0-9_]*$")
   "Matches mixed case names of Lisp symbols which may be mapped to
 unquoted Prolog atoms.")
 
-(defvar *symbol-atom-scanner* (cl-ppcre:create-scanner "^[-#$&*+./:<=>?@^`~!]+$")
+(defvar *symbol-atom-scanner*
+  (cl-ppcre:create-scanner "^[-#$&*+./:<=>?@^`~!]+$")
   "Matches names of Lisp symbols which may be mapped to unquoted
 Prolog atoms.")
 
@@ -45,10 +48,12 @@ anonymous variable."
   (cond ((anon-pl-variable-p arg)
          "_")
         ((pl-variable-p arg)
-         (string-capitalize (subseq (lisp-symbol-to-pl arg) 1) :start 0 :end 1))
+         (string-capitalize (subseq (lisp-symbol-to-pl arg) 1)
+                            :start 0 :end 1))
         (t
          (error 'prolog-error
-                :text (format nil "~a does not map to a Prolog variable" arg)))))
+                :text (format nil
+                              "~a does not map to a Prolog variable" arg)))))
 
 (defun maps-to-pl-atom-p (arg)
   "Returns T if ARG is a symbol capable of representing a Prolog atom,
@@ -73,7 +78,7 @@ upper case first letter will return NIL."
 
 ;; Three types of atoms don't need quotes.
 ;; Those satisfying the regex [a-z][a-zA-Z0-9_]*, the regex
-;; [-#$&*+./:<=>?@^`~]+ (the `symbol' characters) and finally
+;; [-#$&*+./:<=>?@^`~]+ (the 'symbol' characters) and finally
 ;; single-character atoms formed from a `solo' character (!;).
 
 (defun pl-quote-atom-p (atom-name)
@@ -81,20 +86,20 @@ upper case first letter will return NIL."
   (not (or (cl-ppcre:scan *valid-mc-atom-scanner* atom-name)
            (cl-ppcre:scan *symbol-atom-scanner* atom-name))))
 
-(defun pl-functor-name (functor)
+(defun pl-functor (predicate)
   "Returns a string which is the name portion of the name/arity string
-FUNCTOR."
-  (subseq functor 0 (position #\/ functor)))
+PREDICATE."
+  (subseq predicate 0 (position #\/ predicate)))
 
-(defun pl-functor-arity (functor)
+(defun pl-arity (predicate)
   "Returns an integer which is the arity portion of name/arity string
-FUNCTOR."
-  (parse-integer functor :start (1+ (position #\/ functor))))
+PREDICATE."
+  (parse-integer predicate :start (1+ (position #\/ predicate))))
 
 (defun lisp-symbol-to-pl (symbol)
   "Returns the symbol name of SYMBOL which will be converted to lower
 case if every letter in the symbol-name is upper case."
-  (let ((name (symbol-name symbol)))
+  (let ((name (lisp-name-to-pl (symbol-name symbol))))
     (if (every #'upper-case-p name)
         (string-downcase name)
       name)))
@@ -131,8 +136,10 @@ bound to a function, or otherwise NIL."
        (symbolp (first expr))
        (fboundp (first expr))))
 
+;; FIXME -- think of a better name for this function
 (defun apply-expression (expr)
   (if (pl-expr-p expr)
+      ;; FIXME -- check fboundp before apply
       (apply (first expr) ; the Lisp function representing the Prolog
                           ; functor
              (mapcar #'(lambda (x)

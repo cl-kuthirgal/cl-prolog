@@ -1,5 +1,5 @@
 
-(in-package #:cl-swi-client)
+(in-package :cl-swi-client)
 
 (defclass swi-prolog (prolog)
   ((server-hostname :initarg :server-hostname
@@ -29,12 +29,7 @@ variables to Prolog terms representing the same Prolog variables."))
   (:documentation ""))
 
 (defclass swi-query (prolog-query)
-  ((query-id :initform nil
-             :initarg :query-id
-             :reader query-id-of
-             :documentation "The identifier of the query specified by
-the Prolog server.")
-   (pl-variables :initform nil
+  ((pl-variables :initform nil
                  :initarg :pl-variables
                  :reader pl-variables-of
                  :documentation "A list of the Lisp Prolog variables

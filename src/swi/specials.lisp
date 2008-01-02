@@ -1,5 +1,5 @@
 
-(in-package #:cl-swi)
+(in-package :cl-swi)
 
 (defconstant +swi-true+ #x01
   "SWI-Prolog true value.")

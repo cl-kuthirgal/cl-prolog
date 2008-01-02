@@ -9,8 +9,8 @@
    #:anon-pl-variable-p
    #:pl-atom-name
    #:pl-variable-name
-   #:pl-functor-name
-   #:pl-functor-arity
+   #:pl-functor
+   #:pl-arity
    #:pl-quote-atom-p
    #:pl-name-to-lisp
    #:lisp-name-to-pl
@@ -48,7 +48,7 @@
    #:prolog-state
    #:create-prolog
    #:destroy-prolog
-   #:is-enabled-p
+   #:enabled-p
    #:create-compound-term
    #:create-rule
    #:find-prolog-module
@@ -77,7 +77,7 @@
    ;; Interface
    #:start-prolog
    #:stop-prolog
-   #:is-enabled-p
+   #:enabled-p
    #:find-module
    #:<-
    #:rule
@@ -87,16 +87,19 @@
    #:next-solution
    #:cut-query
    #:close-query
-   ;; Functors
+   ;; Predicates
    #:and/2
    #:and/n
    #:or/2
    #:or/n
    #:consult/1
+   #:assert/1
+   #:retractall/1
    #:=/2
    #:==/2
    #:not==/2
    #:is/2
+   #:member/2
    #:findall/3
    #:bagof/3
    #:setof/3

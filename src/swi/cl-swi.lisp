@@ -1,5 +1,5 @@
 
-(in-package #:cl-swi)
+(in-package :cl-swi)
 
 (cffi:define-foreign-library libpl
   (t (:default "libpl")))
@@ -173,11 +173,11 @@ the Prolog engine."
     prolog))
 
 (defmethod cl-prolog-sys:destroy-prolog ((prolog swi-prolog))
-  (if (is-enabled-p prolog)
+  (if (enabled-p prolog)
       (pl-destroy prolog)
     (error 'prolog-error :text "SWI-Prolog is not active")))
 
-(defmethod cl-prolog-sys:is-enabled-p ((prolog swi-prolog))
+(defmethod cl-prolog-sys:enabled-p ((prolog swi-prolog))
   (pl-is-init))
 
 (defmethod cl-prolog-sys:create-compound-term ((name string) (args list)
@@ -209,7 +209,8 @@ the Prolog engine."
       (create-compound-term ":-" (adjoin head body) prolog)
     (create-compound-term ":-" (list head (and/n body)) prolog)))
 
-(defmethod cl-prolog-sys:find-prolog-module ((name string) (prolog swi-prolog))
+(defmethod cl-prolog-sys:find-prolog-module ((name string)
+                                             (prolog swi-prolog))
   (ensure-module name prolog))
 
 (defmethod cl-prolog-sys:call-prolog ((expr list) (module swi-module)
