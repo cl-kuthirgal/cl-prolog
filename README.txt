@@ -69,6 +69,8 @@ cl-ppcre                http://weitz.de/cl-ppcre/
 
 Optional dependencies
 
+usocket                 http://common-lisp.net/project/usocket/
+CFFI                    http://common-lisp.net/project/cffi/
 LIFT                    http://common-lisp.net/project/lift/
 CLDOC                   http://common-lisp.net/project/cldoc/
-CFFI                    http://common-lisp.net/project/cffi/
+
