@@ -21,4 +21,5 @@
 
 (defpackage :cl-prolog-test
   (:use #:common-lisp #:cl-prolog #:lift)
+  (:export #:cl-prolog-tests)
   (:documentation "cl-prolog tests."))

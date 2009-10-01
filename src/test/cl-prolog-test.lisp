@@ -78,15 +78,14 @@
   (ensure (= 2 (cl-prolog-sys::pl-arity "foo/2"))))
 
 (addtest (cl-prolog-tests) name-mangling/1
-  (ensure (string= "foo-bar" (cl-prolog-sys::pl-name-to-lisp "foo_bar"))
-  (ensure (string= "foo_bar" (cl-prolog-sys::lisp-name-to-pl "foo-bar")))))
-
+  (ensure (string= "foo-bar" (cl-prolog-sys::pl-name-to-lisp "foo_bar")))
+  (ensure (string= "foo_bar" (cl-prolog-sys::lisp-name-to-pl "foo-bar"))))
 
 (addtest (cl-prolog-tests) convert-atom/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x foo))
     (ensure success)
-    (ensure (eql '|foo| (cdr (assoc '?x bindings))))))
+    (ensure (eql 'cl-prolog::|foo| (cdr (assoc '?x bindings))))))
 
 (addtest (cl-prolog-tests) convert-integer/1
   (multiple-value-bind (success bindings)
@@ -104,13 +103,14 @@
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x "foo"))
     (ensure success)
-    (ensure (eql '|foo| (cdr (assoc '?x bindings))))))
+    (ensure (eql 'cl-prolog::|foo| (cdr (assoc '?x bindings))))))
 
 (addtest (cl-prolog-tests) convert-list-of-atoms/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x (foo bar)))
     (ensure success)
-    (ensure (equal '(|foo| |bar|)  (cdr (assoc '?x bindings))))))
+    (ensure (equal '(cl-prolog::|foo| cl-prolog::|bar|)
+                   (cdr (assoc '?x bindings))))))
 
 (addtest (cl-prolog-tests) convert-list-of-integers/1
   (multiple-value-bind (success bindings)
@@ -128,22 +128,24 @@
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x (|foo| |bar|)))
     (ensure success)
-    (ensure (equal '(|foo| |bar|) (cdr (assoc '?x  bindings))))))
+    (ensure (equal '(cl-prolog::|foo| cl-prolog::|bar|)
+                   (cdr (assoc '?x  bindings))))))
 
 (addtest (cl-prolog-tests) convert-list-head-tail/1
   (multiple-value-bind (success bindings)
       (query '(=/2 (?h . ?t) (foo bar baz)))
     (ensure success)
-    (ensure (eql '|foo| (cdr (assoc '?h bindings))))
-    (ensure (equal '(|bar| |baz|) (cdr (assoc '?t  bindings))))))
+    (ensure (eql 'cl-prolog::|foo| (cdr (assoc '?h bindings))))
+    (ensure (equal '(cl-prolog::|bar| cl-prolog::|baz|)
+                   (cdr (assoc '?t  bindings))))))
 
 (addtest (cl-prolog-tests) convert-list-head-tail/2
   (multiple-value-bind (success bindings)
       (query '(=/2 (?h1 ?h2 . ?t) (foo bar baz)))
     (ensure success)
-    (ensure (eql '|foo| (cdr (assoc '?h1 bindings))))
-    (ensure (eql '|bar| (cdr (assoc '?h2  bindings))))
-    (ensure (equal '(|baz|) (cdr (assoc '?t  bindings))))))
+    (ensure (eql 'cl-prolog::|foo| (cdr (assoc '?h1 bindings))))
+    (ensure (eql 'cl-prolog::|bar| (cdr (assoc '?h2  bindings))))
+    (ensure (equal '(cl-prolog::|baz|) (cdr (assoc '?t  bindings))))))
 
 
 (defun setup-zebra ()
@@ -192,8 +194,10 @@
   (multiple-value-bind (success bindings)
       (query '(zebra/3 ?houses ?water-drinker ?zebra-owner))
     (ensure success)
-    (ensure (eql '|norwegian| (cdr (assoc '?water-drinker bindings))))
-    (ensure (eql '|japanese| (cdr (assoc '?zebra-owner bindings))))))
+    (ensure (eql 'cl-prolog::|norwegian|
+                 (cdr (assoc '?water-drinker bindings))))
+    (ensure (eql 'cl-prolog::|japanese|
+                 (cdr (assoc '?zebra-owner bindings))))))
 
 ;; (<- '(cl-prolog-test/1 (test-p/1 a)))
 ;; (<- '(cl-prolog-test/1 (test-p/1 b)))
