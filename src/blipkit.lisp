@@ -58,4 +58,4 @@
 ; (query '(findall/3 ?x (parentRT/2 "GO:0003832" ?x) ?y))
 
 (defunctor association/3 "association/3")
-;; parentRT('GO:0003832', Parent), goa_db:association(ID, Parent, FeatureID).  
+;; parentRT('GO:0003832', Parent), goa_db:association(ID, Parent, FeatureID).

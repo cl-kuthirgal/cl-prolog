@@ -1,0 +1,159 @@
+#!/usr/local/bin/pl -L0 -G0 -A0 -T0 -q -g server -s
+
+:- use_module(library(option)).
+:- use_module(library(memfile)).
+
+:- use_module(library('http/thread_httpd')).
+:- use_module(library('http/http_client')).
+:- use_module(library('http/http_authenticate')).
+:- use_module(library('http/http_parameters')).
+:- use_module(library('http/http_mime_plugin')).
+:- use_module(library('http/http_session')).
+:- use_module(library('http/html_write')).
+:- use_module(library('http/http_error')).
+:- use_module(library('sgml_write')).
+
+:- use_module(bio(blipkit)).
+:- use_module(bio(blipkit_ontol)).
+:- use_module(bio(blipkit_fasta)).
+:- use_module(bio(blipkit_sb)).
+:- use_module(bio(blipkit_goa)).
+:- use_module(bio(io)).
+:- use_module(bio(ontol_db)).
+:- use_module(bio(bioseq)).
+
+:- load_biofile(obo, '/home/keith/dev/ontology/obo/gene_ontology.obo').
+
+server :-
+    server(3000, []).
+
+server(Port, Options) :-
+    open_log('server.log'),
+    http_server(reply, [port(Port), workers(5), timeout(20)|Options]).
+
+open_log(File) :-
+    open(File, write, LogStream, [type(text),
+                                  buffer(full),
+                                  close_on_abort(true)]),
+    assert(log_stream(LogStream)).
+
+authenticate_request(Request, PasswdFile) :-
+    (http_authenticate(basic(PasswdFile), Request, _)
+    ->
+     true
+    ;
+     throw(http_reply(authorise(basic, _)))).
+
+parse_client_request(Request, Term) :-
+    new_memory_file(MemFile),
+    %% Write client data into a memfile
+    open_memory_file(MemFile, write, MemFileIn),
+    http_read_data(Request, _, [to(stream(MemFileIn))]),
+    close(MemFileIn),
+    %% Open a stream from the memfile
+    open_memory_file(MemFile, read, MemFileOut),
+    read_term(MemFileOut, Term, []),
+    close(MemFileOut),
+    free_memory_file(MemFile).
+
+reply(Request) :-
+    authenticate_request(Request, 'authenticate.txt'),
+    member(method(post), Request),
+    !,
+    parse_client_request(Request, Term),
+    goal(Goal, Vars, Options) = Term,
+    print_log(Request, " ~w~n", Term),
+    catch((Goal
+          ->
+           send_success(Goal, Vars, Options)
+          ;
+           send_failure(Options)),
+          Exception,
+          (message_to_string(Exception, Message),
+           format('~s~n', [Message]),
+           true)).
+
+send_success(Goal, Vars, Options) :-
+    reply_format(Format, Options),
+    (Format == term
+    ->
+     format('Content-type: text/prolog-term~n~n', []),
+     format('~q ~q~n', [Goal, Vars])
+    ;
+     format('Content-type: text/sexp~n~n', []),
+     write_sexp(current_output, [Goal, Vars]),
+     format(current_output, '~n', [])).
+
+send_failure(Options) :-
+    reply_format(Format, Options),
+    (Format == term
+    ->
+     format('Content-type: text/prolog-term~n~n', []),
+     format('No~n', [])
+    ;
+     format('Content-type: text/sexp~n~n', []),
+     format('nil~n', [])).
+
+reply_format(Format, Options) :-
+    option(reply(Format), Options, term),
+    must_be(oneof([term, sexp]), Format).
+    
+print_log(Request, Format, Args) :-
+    get_time(TimeStamp),
+    log_stream(LogStream),
+    format_time(LogStream, '%H:%M:%S %Y-%m-%d', TimeStamp),
+    format(LogStream, ' ~q', Request),
+    (member(peer(Peer), Request)
+    ->
+     format(LogStream, ' from ~q ', [Peer])
+    ;
+     print(LogStream, ' ip(?, ?, ?, ?) ')),
+    format(LogStream, Format, Args).
+
+%% Translates Prolog terms into Lisp sexp
+write_sexp(ServerOut, []) :-
+    format(ServerOut, ' nil', []),
+    !.
+write_sexp(ServerOut, fail) :-
+    format(ServerOut, ' nil', []),
+    !.
+write_sexp(ServerOut, true) :-
+    format(ServerOut, ' t', []),
+    !.
+write_sexp(ServerOut, Term) :-
+    string(Term),
+    format(ServerOut, ' "~a"', [Term]),
+    !.
+write_sexp(ServerOut, Term) :-
+    atom(Term),
+    format(ServerOut, ' \'|~a|', [Term]),
+    %% format(ServerOut, ' "~a"', [Term]),
+    !.
+write_sexp(ServerOut, Term) :-
+    integer(Term),
+    format(ServerOut, ' ~d', [Term]),
+    !.
+write_sexp(ServerOut, Term) :-
+    float(Term),
+    format(ServerOut, ' ~f', [Term]),
+    !.
+write_sexp(ServerOut, Term) :-
+    compound(Term),
+    functor(Term, '.', _),
+    format(ServerOut, ' (cons', []),
+    findall(_, (arg(_, Term, Value), write_sexp(ServerOut, Value)), _),
+    format(ServerOut, ')', []),
+    !.
+write_sexp(ServerOut, Term) :-
+    compound(Term),
+    Term =.. List,
+    write_sexp(ServerOut, List),
+    !.
+
+:- compile_predicates([parse_client_request/2,
+                       reply/1,
+                       send_success/3,
+                       send_failure/1,
+                       reply_format/2,
+                       write_sexp/2,
+                       print_log/3]).

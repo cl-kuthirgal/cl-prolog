@@ -1,0 +1,219 @@
+#!/usr/local/bin/pl -L0 -G0 -A0 -T0 -q -g server -t halt -s
+
+/**
+
+  A simple server designed to provide Prolog services for a Lisp
+  client. I wrote this as an alternative to using an embedded SWI
+  Prolog as it is more stable. An embedded Prolog was able to
+  crash the host Lisp fairly easily.
+
+  This is my first real Prolog application which is my excuse for any
+  poor code.
+
+  This server has the following characteristics.
+
+  * Absolutely no security. Do not use on a networked machine.
+
+  * Single-threaded.
+
+  * Runs with constant local stack space.
+
+
+  Client-server protocol.
+
+
+  Cilent-side commands.
+
+
+  client_call(Goal):
+
+  Calls Goal on server, returning true on success, or fail otherwise.
+
+
+  client_open_query(Query, Vars):
+
+  Evaluates Query on server, returning a query identifier. Vars should
+  be a list of Prolog variables used in the query whose bindings the
+  server is to report.
+
+  client_next_solution:
+
+  Retrieves the next bindings of Vars from the current query, or
+  'no_more_solutions' if there are no further solutions. If Vars was
+  an empty list in the client_open_query call then either true or fail
+  is returned instead.
+
+
+  client_close_query:
+
+  Closes the current query. This may be sent before all available
+  solutions have been enumerated.
+
+
+  client_finished:
+
+  Announces that the client has completed its interaction with the
+  server and is disconnecting.
+
+  **/
+
+
+:- use_module(library(socket)).
+
+:- guitracer.
+
+
+port(localhost:4321).
+
+open_log(File) :-
+    open(File, write, LogStream, [type(text),
+                                  buffer(full),
+                                  close_on_abort(true)]),
+    assert(log_stream(LogStream)).
+
+print_log(Format, Args) :-
+    format(user_error, Format, Args),
+    get_time(TimeStamp),
+    log_stream(LogStream),
+    format_time(LogStream, '%H:%M:%S %Y-%m-%d ', TimeStamp),
+    format(LogStream, Format, Args).
+
+server :-
+    open_log('homebrew_server.log'),
+    port(Port),
+    tcp_socket(ServerSocket),
+    tcp_bind(ServerSocket, Port),
+    server_listen_loop(ServerSocket),
+    format('Exit server~n', []),
+    tcp_close_socket(ServerSocket).
+
+server_reply(ServerReply, ServerOut) :-
+    print_log('Server sending ~q~n', [ServerReply]),
+    write_sexp(ServerOut, ServerReply),
+    format(ServerOut, '~n', []),
+    flush_output(ServerOut).
+
+server_listen_loop(ServerSocket) :-
+    tcp_listen(ServerSocket, 5),
+    tcp_accept(ServerSocket, ClientSocket, ClientAddress),
+    print_log('Connection accepted from ~w~n', [ClientAddress]),
+    tcp_open_socket(ClientSocket, ServerIn, ServerOut),
+    client_request_loop(ServerIn, ServerOut),
+    close(ServerIn),
+    close(ServerOut),
+    server_listen_loop(ServerSocket).
+
+client_request_loop(ServerIn, ServerOut) :-
+    repeat,
+    wait_for_input([ServerIn], [ReadyIn], 0),
+    catch(read_term(ReadyIn, ClientRequest, []),
+          Exception,
+          (handle_client_error(Exception, Message),
+           server_reply(Message, ServerOut),
+           fail)),
+    print_log('Server read term ~w~n', [ClientRequest]),
+    catch(dispatch_client_request(ClientRequest, ServerIn, ServerOut),
+          Exception,
+          (handle_client_error(Exception, Message),
+           server_reply(Message, ServerOut),
+           fail)),
+    member(ClientRequest, [client_finished, end_of_file]),
+    !.
+
+dispatch_client_request(ClientRequest, ServerIn, ServerOut) :-
+    handle_end_of_file(ClientRequest)
+    ; handle_client_finished(ClientRequest, ServerOut)
+    ; handle_call(ClientRequest, ServerOut)
+    ; handle_close_query(ClientRequest, ServerOut)
+    ; handle_next_solution(ClientRequest, ServerOut)
+    ; handle_open_query(ClientRequest, ServerIn, ServerOut).
+
+handle_end_of_file(ClientRequest) :-
+    end_of_file = ClientRequest,
+    print_log('Server recieved ~q~n', [ClientRequest]).
+
+handle_client_finished(ClientRequest, ServerOut) :-
+    client_finished = ClientRequest,
+    server_reply(true, ServerOut),
+    print_log('Server recieved finish: ~q~n', [ClientRequest]).
+
+handle_call(ClientRequest, ServerOut) :-
+    client_call(Goal) = ClientRequest,
+    print_log('Server recieved call: ~q~n', [Goal]),
+    (Goal
+    -> server_reply(true, ServerOut)
+    ; server_reply(fail, ServerOut)).
+
+handle_open_query(ClientRequest, ServerIn, ServerOut) :-
+    client_open_query(Query, Vars) = ClientRequest,
+    print_log('Server recieved open query ~q~n', [Query]),
+    wait_for_input([ServerIn], [ReadyIn], 0),
+    read_term(ReadyIn, ClientRequest2, []),
+    print_log('Server recieved ~q~n', [ClientRequest2]),
+    (client_close_query = ClientRequest2
+    ->
+     server_reply(true, ServerOut)
+    ;
+     (client_next_solution = ClientRequest2
+     ->
+      Query,
+      server_reply(Vars, ServerOut),
+      wait_for_input([ServerIn], [ReadyIn], 0),
+      read_term(ReadyIn, ClientRequest3, []),
+      print_log('Server recieved ~q~n', [ClientRequest3]),
+      (client_close_query = ClientRequest3
+      ->
+       !,
+       server_reply(true, ServerOut),
+       true
+      ;
+       fail))).
+
+handle_next_solution(ClientRequest, ServerOut) :-
+    client_next_solution = ClientRequest,
+    server_reply(no_more_solutions, ServerOut).
+
+handle_close_query(ClientRequest, ServerOut) :-
+    client_close_query = ClientRequest,
+    server_reply(true, ServerOut).
+
+handle_client_error(Exception, Message) :-
+    Message = [client_input_error, Exception].
+
+handle_server_error(Exception, Message) :-
+    Message = [server_error, Exception].
+
+write_sexp(ServerOut, []) :-
+    format(ServerOut, ' nil', []),
+    !.
+write_sexp(ServerOut, fail) :-
+    format(ServerOut, ' nil', []),
+    !.
+write_sexp(ServerOut, true) :-
+    format(ServerOut, ' t', []),
+    !.
+write_sexp(ServerOut, Term) :-
+    string(Term),
+    format(ServerOut, ' "~a"', [Term]),
+    !.
+write_sexp(ServerOut, Term) :-
+    atom(Term),
+    format(ServerOut, ' \'|~a|', [Term]),
+    %% format(ServerOut, ' "~a"', [Term]),
+    !.
+write_sexp(ServerOut, Term) :-
+    number(Term),
+    format(ServerOut, ' ~q', [Term]),
+    !.
+write_sexp(ServerOut, Term) :-
+    compound(Term),
+    functor(Term, '.', _),
+    format(ServerOut, ' (cons', []),
+    findall(_, (arg(_, Term, Value), write_sexp(ServerOut, Value)), _),
+    format(ServerOut, ')', []),
+    !.
+write_sexp(ServerOut, Term) :-
+    compound(Term),
+    Term =.. List,
+    write_sexp(ServerOut, List),
+    !.

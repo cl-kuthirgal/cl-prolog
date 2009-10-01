@@ -1,11 +1,26 @@
-
-(in-package :cl-prolog-system)
-
-(fiveam:def-suite testsuite
-    :description "The test suite.")
-
+;;;
+;;; Copyright (C) 2007-2009 Keith James. All rights reserved.
+;;;
+;;; This file is part of cl-prolog.
+;;;
+;;; This program is free software: you can redistribute it and/or modify
+;;; it under the terms of the GNU General Public License as published by
+;;; the Free Software Foundation, either version 3 of the License, or
+;;; (at your option) any later version.
+;;;
+;;; This program is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;; GNU General Public License for more details.
+;;;
+;;; You should have received a copy of the GNU General Public License
+;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;;;
 
 (in-package :cl-prolog-test)
+
+(deftestsuite cl-prolog-tests ()
+  ())
 
 (defpredicate cl-prolog-test/1 "cl_prolog_test/1"
   "Predicate marking all cl-prolog test facts.")
@@ -19,113 +34,110 @@
 (defpredicate zebra/3 "zebra/3")
 (defpredicate house/5 "house/5")
 
-
-(in-suite cl-prolog-system:testsuite)
-
 (when (or (null cl-prolog:*current-prolog*)
           (not (enabled-p cl-prolog:*current-prolog*)))
   (setf cl-prolog:*current-prolog*
         (start-prolog :swi-client-prolog "localhost" 4321))
   (setf cl-prolog:*current-module* (find-module "user")))
 
-(test pl-atom-p
+(addtest (cl-prolog-tests) pl-atom-p/1
   (is-true (pl-atom-p 'foo))
   (is-true (pl-atom-p '|fOO|))
   (is-true (pl-atom-p 'foo_bar))
   (is-false (pl-atom-p '|Foo|))
   (is-true (pl-atom-p '!)))
 
-(test pl-variable-p
+(addtest (cl-prolog-tests) pl-variable-p/1
   (is-true (pl-variable-p '?foo))
   (is-false (pl-variable-p 'foo)))
 
-(test anon-pl-variable-p
+(addtest (cl-prolog-tests) anon-pl-variable-p/1
   (is-true (anon-pl-variable-p '?_))
   (is-false (anon-pl-variable-p '?foo)))
 
-(test pl-variable-name
+(addtest (cl-prolog-tests) pl-variable-name/1
   (is (string= "FOO" (pl-variable-name '?foo)))
   (is (string= "_" (pl-variable-name '?_)))
   (is (string= "FOO_BAR" (pl-variable-name '?foo-bar))))
   ;; (assert-error 'prolog-error (pl-variable-name 'foo)))
 
-(test pl-atom-name
+(addtest (cl-prolog-tests) pl-atom-name/1
   (is (string= "foo" (pl-atom-name 'foo)))
   (is (string= "fOO" (pl-atom-name '|fOO|))))
   ;; (assert-error 'prolog-error (pl-atom-name '|Foo|)))
 
-(test pl-quote-atom-p
+(addtest (cl-prolog-tests) pl-quote-atom-p/1
   (is-false (cl-prolog-sys::pl-quote-atom-p "abc"))
   (is-false (cl-prolog-sys::pl-quote-atom-p "aBC"))
   (is-true (cl-prolog-sys::pl-quote-atom-p "Abc"))
   (is-false (cl-prolog-sys::pl-quote-atom-p "<="))
   (is-true (cl-prolog-sys::pl-quote-atom-p "a=")))
 
-(test pl-functor/arity
+(addtest (cl-prolog-tests) pl-functor/arity/1
   (is (string= "foo" (cl-prolog-sys::pl-functor "foo/2")))
   (is (= 2 (cl-prolog-sys::pl-arity "foo/2"))))
 
-(test name-mangling
+(addtest (cl-prolog-tests) name-mangling/1
   (is (string= "foo-bar" (cl-prolog-sys::pl-name-to-lisp "foo_bar"))
   (is (string= "foo_bar" (cl-prolog-sys::lisp-name-to-pl "foo-bar")))))
 
 
-(test convert-atom
+(addtest (cl-prolog-tests) convert-atom/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x foo))
     (is-true success)
     (is (eql '|foo| (cdr (assoc '?x bindings))))))
 
-(test convert-integer
+(addtest (cl-prolog-tests) convert-integer/1
   (multiple-value-bind (success bindings)
       (query '(is/2 ?x 1))
     (is-true success)
     (is (= 1 (cdr (assoc '?x bindings))))))
 
-(test convert-float
+(addtest (cl-prolog-tests) convert-float/1
   (multiple-value-bind (success bindings)
       (query '(is/2 ?x 1.1))
     (is-true success)
     (is (= 1.1 (cdr (assoc '?x bindings))))))
 
-(test convert-string
+(addtest (cl-prolog-tests) convert-string/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x "foo"))
     (is-true success)
     (is (eql '|foo| (cdr (assoc '?x bindings))))))
 
-(test convert-list-of-atoms
+(addtest (cl-prolog-tests) convert-list-of-atoms/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x (foo bar)))
     (is-true success)
     (is (equal '(|foo| |bar|)  (cdr (assoc '?x bindings))))))
 
-(test convert-list-of-integers
+(addtest (cl-prolog-tests) convert-list-of-integers/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x (1 2)))
     (is-true success)
     (is (equal '(1 2) (cdr (assoc '?x  bindings))))))
 
-(test convert-list-of-floats
+(addtest (cl-prolog-tests) convert-list-of-floats/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x (1.1 2.2)))
     (is-true success)
     (is (equal '(1.1 2.2) (cdr (assoc '?x  bindings))))))
 
-(test convert-list-of-strings
+(addtest (cl-prolog-tests) convert-list-of-strings/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x (|foo| |bar|)))
     (is-true success)
     (is (equal '(|foo| |bar|) (cdr (assoc '?x  bindings))))))
 
-(test convert-list-head-tail
+(addtest (cl-prolog-tests) convert-list-head-tail/1
   (multiple-value-bind (success bindings)
       (query '(=/2 (?h . ?t) (foo bar baz)))
     (is-true success)
     (is (eql '|foo| (cdr (assoc '?h bindings))))
     (is (equal '(|bar| |baz|) (cdr (assoc '?t  bindings))))))
 
-(test convert-list-head-tail/2
+(addtest (cl-prolog-tests) convert-list-head-tail/2
   (multiple-value-bind (success bindings)
       (query '(=/2 (?h1 ?h2 . ?t) (foo bar baz)))
     (is-true success)
@@ -175,7 +187,7 @@
         (member/2 (house/5 ?w ?_ ?_ water ?_) ?h)
         (member/2 (house/5 ?z zebra ?_ ?_ ?_) ?h))))
 
-(test zebra
+(addtest (cl-prolog-tests) zebra/1
   (setup-zebra)
   (multiple-value-bind (success bindings)
       (query '(zebra/3 ?houses ?water-drinker ?zebra-owner))
