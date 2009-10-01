@@ -41,109 +41,109 @@
   (setf cl-prolog:*current-module* (find-module "user")))
 
 (addtest (cl-prolog-tests) pl-atom-p/1
-  (is-true (pl-atom-p 'foo))
-  (is-true (pl-atom-p '|fOO|))
-  (is-true (pl-atom-p 'foo_bar))
-  (is-false (pl-atom-p '|Foo|))
-  (is-true (pl-atom-p '!)))
+  (ensure (pl-atom-p 'foo))
+  (ensure (pl-atom-p '|fOO|))
+  (ensure (pl-atom-p 'foo_bar))
+  (ensure-null (pl-atom-p '|Foo|))
+  (ensure (pl-atom-p '!)))
 
 (addtest (cl-prolog-tests) pl-variable-p/1
-  (is-true (pl-variable-p '?foo))
-  (is-false (pl-variable-p 'foo)))
+  (ensure (pl-variable-p '?foo))
+  (ensure-null (pl-variable-p 'foo)))
 
 (addtest (cl-prolog-tests) anon-pl-variable-p/1
-  (is-true (anon-pl-variable-p '?_))
-  (is-false (anon-pl-variable-p '?foo)))
+  (ensure (anon-pl-variable-p '?_))
+  (ensure-null (anon-pl-variable-p '?foo)))
 
 (addtest (cl-prolog-tests) pl-variable-name/1
-  (is (string= "FOO" (pl-variable-name '?foo)))
-  (is (string= "_" (pl-variable-name '?_)))
-  (is (string= "FOO_BAR" (pl-variable-name '?foo-bar))))
+  (ensure (string= "FOO" (pl-variable-name '?foo)))
+  (ensure (string= "_" (pl-variable-name '?_)))
+  (ensure (string= "FOO_BAR" (pl-variable-name '?foo-bar))))
   ;; (assert-error 'prolog-error (pl-variable-name 'foo)))
 
 (addtest (cl-prolog-tests) pl-atom-name/1
-  (is (string= "foo" (pl-atom-name 'foo)))
-  (is (string= "fOO" (pl-atom-name '|fOO|))))
+  (ensure (string= "foo" (pl-atom-name 'foo)))
+  (ensure (string= "fOO" (pl-atom-name '|fOO|))))
   ;; (assert-error 'prolog-error (pl-atom-name '|Foo|)))
 
 (addtest (cl-prolog-tests) pl-quote-atom-p/1
-  (is-false (cl-prolog-sys::pl-quote-atom-p "abc"))
-  (is-false (cl-prolog-sys::pl-quote-atom-p "aBC"))
-  (is-true (cl-prolog-sys::pl-quote-atom-p "Abc"))
-  (is-false (cl-prolog-sys::pl-quote-atom-p "<="))
-  (is-true (cl-prolog-sys::pl-quote-atom-p "a=")))
+  (ensure-null (cl-prolog-sys::pl-quote-atom-p "abc"))
+  (ensure-null (cl-prolog-sys::pl-quote-atom-p "aBC"))
+  (ensure (cl-prolog-sys::pl-quote-atom-p "Abc"))
+  (ensure-null (cl-prolog-sys::pl-quote-atom-p "<="))
+  (ensure (cl-prolog-sys::pl-quote-atom-p "a=")))
 
 (addtest (cl-prolog-tests) pl-functor/arity/1
-  (is (string= "foo" (cl-prolog-sys::pl-functor "foo/2")))
-  (is (= 2 (cl-prolog-sys::pl-arity "foo/2"))))
+  (ensure (string= "foo" (cl-prolog-sys::pl-functor "foo/2")))
+  (ensure (= 2 (cl-prolog-sys::pl-arity "foo/2"))))
 
 (addtest (cl-prolog-tests) name-mangling/1
-  (is (string= "foo-bar" (cl-prolog-sys::pl-name-to-lisp "foo_bar"))
-  (is (string= "foo_bar" (cl-prolog-sys::lisp-name-to-pl "foo-bar")))))
+  (ensure (string= "foo-bar" (cl-prolog-sys::pl-name-to-lisp "foo_bar"))
+  (ensure (string= "foo_bar" (cl-prolog-sys::lisp-name-to-pl "foo-bar")))))
 
 
 (addtest (cl-prolog-tests) convert-atom/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x foo))
-    (is-true success)
-    (is (eql '|foo| (cdr (assoc '?x bindings))))))
+    (ensure success)
+    (ensure (eql '|foo| (cdr (assoc '?x bindings))))))
 
 (addtest (cl-prolog-tests) convert-integer/1
   (multiple-value-bind (success bindings)
       (query '(is/2 ?x 1))
-    (is-true success)
-    (is (= 1 (cdr (assoc '?x bindings))))))
+    (ensure success)
+    (ensure (= 1 (cdr (assoc '?x bindings))))))
 
 (addtest (cl-prolog-tests) convert-float/1
   (multiple-value-bind (success bindings)
       (query '(is/2 ?x 1.1))
-    (is-true success)
-    (is (= 1.1 (cdr (assoc '?x bindings))))))
+    (ensure success)
+    (ensure (= 1.1 (cdr (assoc '?x bindings))))))
 
 (addtest (cl-prolog-tests) convert-string/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x "foo"))
-    (is-true success)
-    (is (eql '|foo| (cdr (assoc '?x bindings))))))
+    (ensure success)
+    (ensure (eql '|foo| (cdr (assoc '?x bindings))))))
 
 (addtest (cl-prolog-tests) convert-list-of-atoms/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x (foo bar)))
-    (is-true success)
-    (is (equal '(|foo| |bar|)  (cdr (assoc '?x bindings))))))
+    (ensure success)
+    (ensure (equal '(|foo| |bar|)  (cdr (assoc '?x bindings))))))
 
 (addtest (cl-prolog-tests) convert-list-of-integers/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x (1 2)))
-    (is-true success)
-    (is (equal '(1 2) (cdr (assoc '?x  bindings))))))
+    (ensure success)
+    (ensure (equal '(1 2) (cdr (assoc '?x  bindings))))))
 
 (addtest (cl-prolog-tests) convert-list-of-floats/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x (1.1 2.2)))
-    (is-true success)
-    (is (equal '(1.1 2.2) (cdr (assoc '?x  bindings))))))
+    (ensure success)
+    (ensure (equal '(1.1 2.2) (cdr (assoc '?x  bindings))))))
 
 (addtest (cl-prolog-tests) convert-list-of-strings/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x (|foo| |bar|)))
-    (is-true success)
-    (is (equal '(|foo| |bar|) (cdr (assoc '?x  bindings))))))
+    (ensure success)
+    (ensure (equal '(|foo| |bar|) (cdr (assoc '?x  bindings))))))
 
 (addtest (cl-prolog-tests) convert-list-head-tail/1
   (multiple-value-bind (success bindings)
       (query '(=/2 (?h . ?t) (foo bar baz)))
-    (is-true success)
-    (is (eql '|foo| (cdr (assoc '?h bindings))))
-    (is (equal '(|bar| |baz|) (cdr (assoc '?t  bindings))))))
+    (ensure success)
+    (ensure (eql '|foo| (cdr (assoc '?h bindings))))
+    (ensure (equal '(|bar| |baz|) (cdr (assoc '?t  bindings))))))
 
 (addtest (cl-prolog-tests) convert-list-head-tail/2
   (multiple-value-bind (success bindings)
       (query '(=/2 (?h1 ?h2 . ?t) (foo bar baz)))
-    (is-true success)
-    (is (eql '|foo| (cdr (assoc '?h1 bindings))))
-    (is (eql '|bar| (cdr (assoc '?h2  bindings))))
-    (is (equal '(|baz|) (cdr (assoc '?t  bindings))))))
+    (ensure success)
+    (ensure (eql '|foo| (cdr (assoc '?h1 bindings))))
+    (ensure (eql '|bar| (cdr (assoc '?h2  bindings))))
+    (ensure (equal '(|baz|) (cdr (assoc '?t  bindings))))))
 
 
 (defun setup-zebra ()
@@ -191,9 +191,9 @@
   (setup-zebra)
   (multiple-value-bind (success bindings)
       (query '(zebra/3 ?houses ?water-drinker ?zebra-owner))
-    (is-true success)
-    (is (eql '|norwegian| (cdr (assoc '?water-drinker bindings))))
-    (is (eql '|japanese| (cdr (assoc '?zebra-owner bindings))))))
+    (ensure success)
+    (ensure (eql '|norwegian| (cdr (assoc '?water-drinker bindings))))
+    (ensure (eql '|japanese| (cdr (assoc '?zebra-owner bindings))))))
 
 ;; (<- '(cl-prolog-test/1 (test-p/1 a)))
 ;; (<- '(cl-prolog-test/1 (test-p/1 b)))
