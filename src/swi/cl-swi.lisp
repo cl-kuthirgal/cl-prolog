@@ -19,11 +19,6 @@
 
 (in-package :cl-swi)
 
-(cffi:define-foreign-library libpl
-  (t (:default "libpl")))
-
-(cffi:use-foreign-library libpl)
-
 (defun pl-init (prolog arg-list)
   "Initialises the SWI-Prolog backend PROLOG with the arguments in
 ARG-LIST. The arguments must be strings. Returns T on successful

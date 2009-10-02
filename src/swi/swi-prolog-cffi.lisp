@@ -19,6 +19,11 @@
 
 (in-package :swi-prolog-cffi)
 
+(cffi:define-foreign-library libpl
+  (t (:default "libpl")))
+
+(cffi:use-foreign-library libpl)
+
 (defctype atom-t :unsigned-long
   "Prolog atom")
 (defctype module-t :pointer
