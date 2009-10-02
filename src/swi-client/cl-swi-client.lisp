@@ -176,8 +176,8 @@ for PROLOG."
 (defmethod cl-prolog-sys:destroy-prolog ((prolog swi-prolog))
   (let ((server-stream (socket-stream (server-socket-of prolog))))
     (cond ((enabled-p prolog)
-           (send-prolog-message "client_finished")
-           (format t "On closing got ~a~%" (receive-prolog-reply stream))
+           (send-prolog-message server-stream "client_finished")
+           (format t "On closing got ~a~%" (receive-prolog-reply server-stream))
            (close server-stream))
           ((and server-stream
                 (not (open-stream-p server-stream)))
