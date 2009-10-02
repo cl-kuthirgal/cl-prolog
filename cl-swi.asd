@@ -17,7 +17,10 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ;;;
 
-(in-package :cl-prolog-system)
+(defpackage :cl-swi-system
+  (:use :common-lisp :asdf :deoxybyte-systems))
+
+(in-package :cl-swi-system)
 
 (defsystem cl-swi
     :name "Common Lisp Prolog embedded SWI-Prolog backend"
@@ -27,6 +30,6 @@
                           :serial t
                           :components ((:file "package")
                                        (:file "specials")
-                                       (:file "swi-prolog-cffi")
+                                       (:file "swi-prolog-ffi")
                                        (:file "classes")
                                        (:file "cl-swi")))))

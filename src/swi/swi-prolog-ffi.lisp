@@ -17,7 +17,7 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ;;;
 
-(in-package :swi-prolog-cffi)
+(in-package :swi-prolog-ffi)
 
 (cffi:define-foreign-library libpl
   (t (:default "libpl")))

@@ -17,7 +17,7 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ;;;
 
-(defpackage :swi-prolog-cffi
+(defpackage :swi-prolog-ffi
   (:use #:common-lisp #:cffi)
   (:documentation "SWI-Prolog foreign library interface.")
   (:export
@@ -125,6 +125,6 @@
    #:pl-query))
 
 (defpackage :cl-swi
-  (:use #:common-lisp #:cl-prolog #:cl-prolog-sys #:swi-prolog-cffi)
-  (:nicknames "swi")
+  (:use #:common-lisp #:cl-prolog #:cl-prolog-sys #:swi-prolog-ffi)
+  (:nicknames #:swi)
   (:documentation "SWI-Prolog implementation."))
