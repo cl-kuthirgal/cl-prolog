@@ -116,20 +116,20 @@
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x (1 2)))
     (ensure success)
-    (ensure (equal '(1 2) (cdr (assoc '?x  bindings))))))
+    (ensure (equal '(1 2) (cdr (assoc '?x bindings))))))
 
 (addtest (cl-prolog-tests) convert-list-of-floats/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x (1.1 2.2)))
     (ensure success)
-    (ensure (equal '(1.1 2.2) (cdr (assoc '?x  bindings))))))
+    (ensure (equal '(1.1 2.2) (cdr (assoc '?x bindings))))))
 
 (addtest (cl-prolog-tests) convert-list-of-strings/1
   (multiple-value-bind (success bindings)
       (query '(=/2 ?x (|foo| |bar|)))
     (ensure success)
     (ensure (equal '(cl-prolog::|foo| cl-prolog::|bar|)
-                   (cdr (assoc '?x  bindings))))))
+                   (cdr (assoc '?x bindings))))))
 
 (addtest (cl-prolog-tests) convert-list-head-tail/1
   (multiple-value-bind (success bindings)
@@ -137,7 +137,7 @@
     (ensure success)
     (ensure (eql 'cl-prolog::|foo| (cdr (assoc '?h bindings))))
     (ensure (equal '(cl-prolog::|bar| cl-prolog::|baz|)
-                   (cdr (assoc '?t  bindings))))))
+                   (cdr (assoc '?t bindings))))))
 
 (addtest (cl-prolog-tests) convert-list-head-tail/2
   (multiple-value-bind (success bindings)
@@ -145,8 +145,9 @@
     (ensure success)
     (ensure (eql 'cl-prolog::|foo| (cdr (assoc '?h1 bindings))))
     (ensure (eql 'cl-prolog::|bar| (cdr (assoc '?h2  bindings))))
-    (ensure (equal '(cl-prolog::|baz|) (cdr (assoc '?t  bindings))))))
+    (ensure (equal '(cl-prolog::|baz|) (cdr (assoc '?t bindings))))))
 
+(defparameter *zebra-setup* nil)
 
 (defun setup-zebra ()
   ;; (call '(retractall/1 (iright/3 ?_ ?_ ?_)))
@@ -187,10 +188,13 @@
         (nextto/3 (house/5 norwegian ?_ ?_ ?_ ?_)
          (house/5 ?_ ?_ ?_ ?_ blue) ?h)
         (member/2 (house/5 ?w ?_ ?_ water ?_) ?h)
-        (member/2 (house/5 ?z zebra ?_ ?_ ?_) ?h))))
+        (member/2 (house/5 ?z zebra ?_ ?_ ?_) ?h)))
+
+  (setf *zebra-setup* t))
 
 (addtest (cl-prolog-tests) zebra/1
-  (setup-zebra)
+  (unless *zebra-setup*
+    (setup-zebra))
   (multiple-value-bind (success bindings)
       (query '(zebra/3 ?houses ?water-drinker ?zebra-owner))
     (ensure success)
